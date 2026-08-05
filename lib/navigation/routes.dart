@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:next_flutter_recipe/UI/features/login.dart';
 
 import '../main.dart';
 
@@ -24,7 +25,7 @@ class AppRoutes {
       GoRoute(
         path: "/$login",
         name: login,
-        builder: (context, state) => const MyHomePage(title: 'My recipe app'),
+        builder: (context, state) => const LoginView(),
       ),
 
       GoRoute(
