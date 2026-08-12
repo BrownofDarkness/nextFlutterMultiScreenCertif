@@ -17,7 +17,7 @@ class DefaultButton extends StatelessWidget {
     this.icon,
     this.width,
     this.buttonState = ButtonState.enabled,
-    this.backgroundColor = AppColors.primaryDarkColor,
+    this.backgroundColor = AppColors.primaryColor,
     this.contentSize,
   });
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:next_flutter_recipe/UI/features/list_recipes.dart';
 import 'package:next_flutter_recipe/UI/features/login.dart';
-
 import '../main.dart';
 
 class AppRoutes {
@@ -32,7 +32,7 @@ class AppRoutes {
         path: "/$recipes",
         name: recipes,
         builder: (context, state) {
-          return Center(child: Text("Listing all Recipes"));
+          return const ListRecipesView();
         },
         routes: [
           GoRoute(

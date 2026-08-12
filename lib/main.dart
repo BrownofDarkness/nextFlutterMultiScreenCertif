@@ -24,7 +24,7 @@ class _MyAppState extends State<MyApp> {
         routeInformationProvider: AppRoutes.router.routeInformationProvider,
         title: 'My recipe app',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryLightColor),
+          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryColor),
         ),
       ),
     );

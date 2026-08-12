@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:next_flutter_recipe/UI/shared/widgets/default_button.dart';
 import 'package:next_flutter_recipe/models/user_model.dart';
 import 'package:next_flutter_recipe/utils/button_states.dart';
 import 'package:next_flutter_recipe/utils/colors.dart';
+import 'package:next_flutter_recipe/utils/images.dart';
+
+import '../../navigation/routes.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -12,7 +16,7 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   bool isObscured = true;
   bool isProcessing = false;
@@ -22,47 +26,50 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryLightColor,
+      backgroundColor: AppColors.backgroundColor,
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Welcome back", style: TextStyle(fontSize: 24, color: Colors.white)),
-                  SizedBox(height: 10),
-                  Text("Please enter your credentials to login", style: TextStyle(fontSize: 16, color: Colors.white)),
-                  SizedBox(height: 30),
-                ],
+            Container(
+              height: 500,
+              margin: const EdgeInsets.symmetric(horizontal: 20.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20.0),
               ),
-            ),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                ),
+              child: Expanded(
                 child: Form(
                   key: _formKey,
                   child: ListView(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                     children: [
+                      Image.asset(AppImages.logo, width: 100, height: 100),
+                      Text(
+                        "MyRecipes",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 22, color: AppColors.primaryColor),
+                      ),
                       SizedBox(height: 10),
                       TextFormField(
                         enabled: !isProcessing,
                         keyboardType: TextInputType.emailAddress,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         decoration: InputDecoration(
-                          label: Text("Email"),
-                          hintText: "test@example.com",
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
+                            label: Text("Email"),
+                            hintText: "test@example.com",
+                            filled: true,
+                            fillColor: AppColors.tertiaryColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide(
+                                color: AppColors.primaryColor,
+                                width: 1,
+                              ),
+                            ),
+
+                            prefixIcon: Icon(Icons.email)
                         ),
                         onChanged: (value) {
                           setState(() {
@@ -86,13 +93,18 @@ class _LoginViewState extends State<LoginView> {
                         enabled: !isProcessing,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         decoration: InputDecoration(
-                          label: Text("Pseudo"),
-                          hintText: "@wilbrown",
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
+                            label: Text("Pseudo"),
+                            hintText: "@wilbrown",
+                            filled: true,
+                            fillColor: AppColors.tertiaryColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide(
+                                color: AppColors.primaryColor,
+                                width: 2,
+                              ),
+                            ),
+                            prefixIcon: Icon(Icons.person)
                         ),
                         onChanged: (value) {
                           setState(() {
@@ -116,10 +128,15 @@ class _LoginViewState extends State<LoginView> {
                           label: Text("Mot de passe"),
                           hintText: "*********",
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: AppColors.tertiaryColor,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(
+                              color: AppColors.primaryColor,
+                              width: 2,
+                            ),
                           ),
+                          prefixIcon: Icon(Icons.lock),
                           suffixIcon: IconButton(
                             icon: Icon(isObscured?Icons.visibility_off:Icons.visibility),
                             onPressed: () {
@@ -144,9 +161,9 @@ class _LoginViewState extends State<LoginView> {
                           return null;
                         },
                       ),
-                      SizedBox(height: 70),
+                      SizedBox(height: 50),
                       DefaultButton(
-                        label: "Login",
+                        label: "Log in",
                         buttonState: isProcessing?ButtonState.loading:ButtonState.enabled,
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
@@ -155,24 +172,31 @@ class _LoginViewState extends State<LoginView> {
                             });
                             Future.delayed(Duration(seconds: 2), () {
                               UserModel user = UserModel.fromMap(
-                                {
-                                  "pseudo": _pseudo,
-                                  "email": _email,
-                                  "password": _password
-                                }
+                                  {
+                                    "pseudo": _pseudo,
+                                    "email": _email,
+                                    "password": _password
+                                  }
                               );
                               setState(() {
                                 isProcessing = !isProcessing;
                               });
+                              context.pushNamed(AppRoutes.recipes);
                             });
                           }
                         },
                       ),
+                      SizedBox(height: 10),
+                      Text(
+                        "Demo login — any credentials work",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: AppColors.primaryColor.withAlpha(150)),
+                      ),
                     ],
                   ),
                 ),
-              )
-            )
+              ),
+            ),
           ],
         ),
       ),
