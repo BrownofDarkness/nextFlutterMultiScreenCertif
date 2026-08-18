@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:next_flutter_recipe/navigation/routes.dart';
-import 'package:next_flutter_recipe/utils/colors.dart';
+import 'package:next_flutter_recipe/utils/theme.dart';
+import 'package:next_flutter_recipe/utils/theme_controller.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,24 +15,35 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: hideKeyboard,
-      child: MaterialApp.router(
-        routeInformationParser: AppRoutes.router.routeInformationParser,
-        routerDelegate: AppRoutes.router.routerDelegate,
-        routeInformationProvider: AppRoutes.router.routeInformationProvider,
-        title: 'My recipe app',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryColor),
-        ),
-      ),
-    );
+  final ThemeController _themeController = ThemeController();
 
+  @override
+  void dispose() {
+    _themeController.dispose();
+    super.dispose();
   }
 
-  void hideKeyboard() {
-    FocusScope.of(context).requestFocus(FocusNode());
+  @override
+  Widget build(BuildContext context) {
+    return ThemeScope(
+      controller: _themeController,
+      child: ValueListenableBuilder<ThemeMode>(
+        valueListenable: _themeController,
+        builder: (context, mode, _) {
+          return GestureDetector(
+            onTap: () =>
+                FocusManager.instance.primaryFocus?.unfocus(),
+            child: MaterialApp.router(
+              title: 'MyRecipes',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light(),
+              darkTheme: AppTheme.dark(),
+              themeMode: mode,
+              routerConfig: AppRoutes.router,
+            ),
+          );
+        },
+      ),
+    );
   }
 }

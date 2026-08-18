@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:next_flutter_recipe/utils/images.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../utils/colors.dart';
+import '../../data/recipes_repository.dart';
+import '../../models/recipe.dart';
+import '../../navigation/routes.dart';
 import '../shared/widgets/recipe_card.dart';
 
 class ListRecipesView extends StatefulWidget {
@@ -12,109 +14,229 @@ class ListRecipesView extends StatefulWidget {
 }
 
 class _ListRecipesViewState extends State<ListRecipesView> {
-  int activeIndex = 0;
-  final List<String> filters = ['Entrée', 'Plat', 'Dessert', 'Boisson', 'Snack'];
+  final TextEditingController _searchController = TextEditingController();
+  RecipeCategory? _selectedCategory;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() => _query = _searchController.text);
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.menu, color: AppColors.primaryColor,),
-          onPressed: () {
-            // Handle menu button press
-          },
+          icon: const Icon(Icons.menu),
+          onPressed: () {},
         ),
         title: Text(
           'MyRecipes',
-          style: TextStyle(color: AppColors.primaryColor, fontWeight: FontWeight.bold, fontSize: 22),
+          style: text.headlineMedium?.copyWith(
+            color: scheme.primary,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.person, color: AppColors.primaryColor,),
-            onPressed: () {
-              // Handle person button press
-            },
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => context.pushNamed(AppRoutes.profile),
           ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: Column(
-        children: [
-          //search textField
-          Padding(
-            padding: EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: InputDecoration(
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                filled: true,
-                fillColor: AppColors.secondaryColor.withAlpha(50),
-                hintText: 'Search recipes...',
-                hintStyle: TextStyle(color: AppColors.secondaryColor),
-                prefixIcon: Icon(Icons.search, color: AppColors.primaryColor),
-                border: InputBorder.none
-              ),
-            ),
-          ),
-          SizedBox(height: 10),
-          //filters
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                for (int i = 0; i < filters.length; i++)
-                  filterCard(
-                    value: filters[i],
-                    isActive: i == activeIndex,
-                  ),
-              ],
-            ),
-          ),
-          SizedBox(height: 10),
-          // listview of recipes cards
-          Expanded(
-            child: ListView.separated(
-              padding: EdgeInsets.all(16),
-              itemCount: 10,
-              separatorBuilder: (context, index) => SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                return RecipeCard(
-                  recipeName: 'Recipe Title $index',
-                  recipeTime: 10,
-                  recipeDifficulty: 'Easy',
-                  recipeImage: AppImages.logo,
-                  type: 'Entrée',
+      body: SafeArea(
+        top: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isTablet = constraints.maxWidth >= 600;
+            final horizontalPadding = isTablet ? 32.0 : 16.0;
+
+            return ValueListenableBuilder<List<Recipe>>(
+              valueListenable: RecipesRepository.instance,
+              builder: (context, _, _) {
+                final results = RecipesRepository.instance.filtered(
+                  category: _selectedCategory,
+                  query: _query,
+                );
+
+                return CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(
+                          horizontalPadding, 16, horizontalPadding, 12),
+                      sliver: SliverToBoxAdapter(
+                        child: _SearchField(controller: _searchController),
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: horizontalPadding),
+                      sliver: SliverToBoxAdapter(
+                        child: _CategoryChips(
+                          selected: _selectedCategory,
+                          onChanged: (c) =>
+                              setState(() => _selectedCategory = c),
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                    if (results.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _EmptyState(query: _query),
+                      )
+                    else
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(horizontalPadding, 8,
+                            horizontalPadding, 96),
+                        sliver: isTablet
+                            ? SliverGrid(
+                                gridDelegate:
+                                    const SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 360,
+                                  mainAxisSpacing: 20,
+                                  crossAxisSpacing: 20,
+                                  childAspectRatio: 0.85,
+                                ),
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, i) =>
+                                      RecipeCard(recipe: results[i]),
+                                  childCount: results.length,
+                                ),
+                              )
+                            : SliverList.separated(
+                                itemCount: results.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: 16),
+                                itemBuilder: (context, i) =>
+                                    RecipeCard(recipe: results[i]),
+                              ),
+                      ),
+                  ],
                 );
               },
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primaryColor,
-        onPressed: () {
-          // Handle floating action button press
-        },
-        child: Icon(Icons.add, color: Colors.white),
+        onPressed: () => context.pushNamed(AppRoutes.adding),
+        child: const Icon(Icons.add),
       ),
     );
   }
+}
 
-  Widget filterCard({required String value, bool isActive = false}) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          activeIndex = filters.indexOf(value);
-        });
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.primaryColor : AppColors.backgroundColor,
-          borderRadius: BorderRadius.circular(20),
-          border: isActive?Border.fromBorderSide(BorderSide(color: AppColors.primaryColor, width: 1)): null
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  const _SearchField({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      textInputAction: TextInputAction.search,
+      decoration: const InputDecoration(
+        hintText: 'Search recipes...',
+        prefixIcon: Icon(Icons.search),
+      ),
+    );
+  }
+}
+
+class _CategoryChips extends StatelessWidget {
+  final RecipeCategory? selected;
+  final ValueChanged<RecipeCategory?> onChanged;
+  const _CategoryChips({required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    Widget chip({
+      required String label,
+      required bool active,
+      required VoidCallback onTap,
+    }) {
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: ChoiceChip(
+          label: Text(label),
+          selected: active,
+          onSelected: (_) => onTap(),
+          showCheckmark: false,
+          selectedColor: scheme.primary,
+          backgroundColor: scheme.surface,
+          labelStyle: TextStyle(
+            color: active ? scheme.onPrimary : scheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+          side: BorderSide(
+            color: active ? scheme.primary : scheme.outlineVariant,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(999),
+          ),
         ),
-        child: Text(value, style: TextStyle(color: isActive ? Colors.white : AppColors.primaryColor)),
+      );
+    }
+
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          chip(
+            label: 'All',
+            active: selected == null,
+            onTap: () => onChanged(null),
+          ),
+          for (final c in RecipeCategory.values)
+            chip(
+              label: c.label,
+              active: selected == c,
+              onTap: () => onChanged(c),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final String query;
+  const _EmptyState({required this.query});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off, size: 64, color: scheme.onSurfaceVariant),
+          const SizedBox(height: 12),
+          Text(
+            query.isEmpty ? 'No recipes yet' : 'No recipe matches "$query"',
+            style: Theme.of(context).textTheme.titleLarge,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
